@@ -3,25 +3,25 @@
 #define N 60
 using namespace std;
 
-bool isSnake(int x,int y,vector<vector<char>> a,int n){
+bool isSnake(int x,int y,vector<vector<char>> &a,int n){
     return (0<=x && x<n && 0<=y && y<n) && a[x][y]!='0';
 }
 
-void oneStep(int *x,int *y,int dir){
+void oneStep(int &x,int &y,int dir){
 	static vector<int> dx={1,0,0,-1};
 	static vector<int> dy={0,1,-1,0};
-	*x+=dx[dir];
-	*y+=dy[dir];
+	x+=dx[dir];
+	y+=dy[dir];
 }
 
-int tryOneStep(int *x,int *y,int oriDir,vector<vector<char>> a,int n,bool print){
+int tryOneStep(int &x,int &y,int oriDir,vector<vector<char>> &a,int n,bool print){
 	static vector<int> dx={1,0,0,-1};
 	static vector<int> dy={0,1,-1,0};
-	if(print)cout<<a[*x][*y];
+	if(print)cout<<a[x][y];
 	int newDir=-1;
 	for(int i=0;i<4 && newDir==-1;i++){
 		if(i==oriDir)continue;
-		if(isSnake(*x+dx[i],*y+dy[i],a,n)){
+		if(isSnake(x+dx[i],y+dy[i],a,n)){
 			newDir=i;
 			oneStep(x,y,newDir);
 		}
@@ -29,7 +29,7 @@ int tryOneStep(int *x,int *y,int oriDir,vector<vector<char>> a,int n,bool print)
 	return newDir;
 }
 
-void find(int *x,int *y,int oriDir,vector<vector<char>> a,int n,bool print){
+void find(int &x,int &y,int oriDir,vector<vector<char>> &a,int n,bool print){
 	static vector<int> dx={1,0,0,-1};
 	static vector<int> dy={0,1,-1,0};
 	int newDir=0;
@@ -39,10 +39,10 @@ void find(int *x,int *y,int oriDir,vector<vector<char>> a,int n,bool print){
 	}
 }
 
-void determineHead(int *hx,int *hy,int *tx,int *ty,vector<vector<char>> a){
-    if(a[*hx][*hy]-a[*tx][*ty]>0 || (a[*hx][*hy]-a[*tx][*ty]==0 && (*hx>*tx || (*hx==*tx && *hy>*ty)))){
-		swap(*hx,*tx);
-		swap(*hy,*ty);
+void determineHead(int &hx,int &hy,int &tx,int &ty,vector<vector<char>> &a){
+    if(a[hx][hy]-a[tx][ty]>0 || (a[hx][hy]-a[tx][ty]==0 && (hx>tx || (hx==tx && hy>ty)))){
+		swap(hx,tx);
+		swap(hy,ty);
     }
 }
 
@@ -80,21 +80,21 @@ int main(){
         hy=y;
 		tx=x;
 		ty=y;
-		find(&tx,&ty,-1,a,n,false);
+		find(tx,ty,-1,a,n,false);
     }else{				// the position we randomly chosed is neither the head nor the tail
 		hx=x;
         hy=y;
-		find(&hx,&hy,dirs[0],a,n,false);
+		find(hx,hy,dirs[0],a,n,false);
 		tx=x;
 		ty=y;
-		find(&tx,&ty,dirs[1],a,n,false);
+		find(tx,ty,dirs[1],a,n,false);
     }
 	
 	// determine who is the head and who is the tail
-	determineHead(&hx,&hy,&tx,&ty,a);
+	determineHead(hx,hy,tx,ty,a);
 
 	// print the answer
 	x=hx;
 	y=hy;
-	find(&hx,&hy,-1,a,n,true);
+	find(hx,hy,-1,a,n,true);
 }
