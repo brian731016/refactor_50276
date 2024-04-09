@@ -1,57 +1,84 @@
 #include<iostream>
 #include<vector>
-#define N 60
 using namespace std;
 
-bool isSnake(int x,int y,vector<vector<char>> &a,int n){
-    return (0<=x && x<n && 0<=y && y<n) && a[x][y]!='0';
+struct Pos{
+	int x;
+	int y;
+	Pos operator+(Pos a);
+	char getChar(const vector<vector<char>>& a) const;
+};
+
+struct Board{
+	static const vector<Pos> d;
+	vector<vector<char>> a;
+	int n;
+	Pos now;
+	Pos head;
+	Pos tail;
+	Board(vector<vector<char>> _a,int x,int y):
+		a(_a),n(_a.size()),now({x,y}),head({x,y}),tail({x,y}) {};
+	char getChar(Pos pos) const;
+	bool isSnake(Pos pos) const;
+	void oneStep(int dir);
+	int tryOneStep(int oriDir,bool print);
+	void find(int oriDir,bool print);
+	void determineHead();
+};
+
+Pos Pos::operator+(Pos a){
+	return {x+a.x,y+a.y};
 }
 
-void oneStep(int &x,int &y,int dir){
-	static vector<int> dx={1,0,0,-1};
-	static vector<int> dy={0,1,-1,0};
-	x+=dx[dir];
-	y+=dy[dir];
+char Pos::getChar(const vector<vector<char>>& a) const{
+	return a[x][y];
 }
 
-int tryOneStep(int &x,int &y,int oriDir,vector<vector<char>> &a,int n,bool print){
-	static vector<int> dx={1,0,0,-1};
-	static vector<int> dy={0,1,-1,0};
-	if(print)cout<<a[x][y];
+const vector<Pos> Board::d={{1,0},{0,1},{0,-1},{-1,0}};
+
+char Board::getChar(Pos pos) const{
+	return pos.getChar(a);
+}
+
+bool Board::isSnake(Pos pos) const{
+    return (0<=pos.x && pos.x<n && 0<=pos.y && pos.y<n) && getChar(pos)!='0';
+}
+
+void Board::oneStep(int dir){
+	now=now+d[dir];
+}
+
+int Board::tryOneStep(int oriDir,bool print){
+	if(print)cout<<getChar(now);
 	int newDir=-1;
 	for(int i=0;i<4 && newDir==-1;i++){
 		if(i==oriDir)continue;
-		if(isSnake(x+dx[i],y+dy[i],a,n)){
+		if(isSnake(now+d[i])){
 			newDir=i;
-			oneStep(x,y,newDir);
+			oneStep(newDir);
 		}
 	}
 	return newDir;
 }
 
-void find(int &x,int &y,int oriDir,vector<vector<char>> &a,int n,bool print){
-	static vector<int> dx={1,0,0,-1};
-	static vector<int> dy={0,1,-1,0};
+void Board::find(int oriDir,bool print){
 	int newDir=0;
 	while(newDir!=-1){
-		newDir=tryOneStep(x,y,oriDir,a,n,print);
+		newDir=tryOneStep(oriDir,print);
 		oriDir=3-newDir;
 	}
 }
 
-void determineHead(int &hx,int &hy,int &tx,int &ty,vector<vector<char>> &a){
-    if(a[hx][hy]-a[tx][ty]>0 || (a[hx][hy]-a[tx][ty]==0 && (hx>tx || (hx==tx && hy>ty)))){
-		swap(hx,tx);
-		swap(hy,ty);
+void Board::determineHead(){
+    if(getChar(head)-getChar(tail)>0 || (getChar(head)==getChar(tail) && (head.x>tail.x || (head.x==tail.x && head.y>tail.y)))){
+		swap(head,tail);
     }
 }
 
 int main(){
 	int n;
-	vector<vector<char>> a;
-
 	cin>>n;
-	a=vector<vector<char>>(n,vector<char>(n));
+	vector<vector<char>> a(n,vector<char>(n));
 
 	int x,y;
 	for(int i=0;i<n;i++){
@@ -64,37 +91,31 @@ int main(){
 		}
 	}
 
-	vector<int> dx={1,0,0,-1};
-	vector<int> dy={0,1,-1,0};
+	Board board(a,x,y);
+
 	vector<int> dirs={-1,-1};
 	int countDir=0;
 	for(int i=0;i<4;i++){
-		if(isSnake(x+dx[i],y+dy[i],a,n)){
+		if(board.isSnake(board.now+Board::d[i])){
 			dirs[countDir++]=i;
 		}
 	}
 
-	int hx,hy,tx,ty;
     if(countDir==1){	// the position we randomly chosed is either the head or the tail
-        hx=x;
-        hy=y;
-		tx=x;
-		ty=y;
-		find(tx,ty,-1,a,n,false);
+		board.find(-1,false);
+		board.head=board.now;
     }else{				// the position we randomly chosed is neither the head nor the tail
-		hx=x;
-        hy=y;
-		find(hx,hy,dirs[0],a,n,false);
-		tx=x;
-		ty=y;
-		find(tx,ty,dirs[1],a,n,false);
+		board.find(dirs[0],false);
+		board.head=board.now;
+		board.now=board.tail;
+		board.find(dirs[1],false);
+		board.tail=board.now;
     }
 	
 	// determine who is the head and who is the tail
-	determineHead(hx,hy,tx,ty,a);
+	board.determineHead();
 
 	// print the answer
-	x=hx;
-	y=hy;
-	find(hx,hy,-1,a,n,true);
+	board.now=board.head;
+	board.find(-1,true);
 }
